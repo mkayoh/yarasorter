@@ -26,7 +26,7 @@ The duplicate checking option will sort the possibly duplicate rules in the foll
 * Dup_rulenames
 	- Files that contain rules with already used rulenames
 
-One special folder **Meta_files** is reserved for Yara's meta-rulefiles. If you use the aforementioned GithubDownloader it'll download a bunch of meta files as well that are used just for invoking other rule files. Running Yara with multiple of these usually spells trouble and because of this the script will pick out all of the files that have the string *include "<rule_file>"* in them.
+One special folder **Meta_files** is reserved for Yara's meta-rulefiles. If you use the aforementioned GithubDownloader it'll download a bunch of meta files as well that are used just for invoking other rulefiles. Running Yara with multiple of these usually spells trouble and because of this the script will pick out all of the files that have the string *include "rule_file"* in them.
 
 ## Disclaimer
 

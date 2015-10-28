@@ -29,6 +29,7 @@ class YaraSorter:
             misc_regex = '[Mm][Ii][Ss][Cc]'
             rule_regex = '\{([\S\s]*)\}'
             rname_regex = r'rule\s+(.*\S{1})\r*?\n*?$'
+            include_regex = re.search(r'include\s+\".*?\"', self.file)
 
             if re.search(script_regex, self.filename) is not None:
               self.file.close()
@@ -48,7 +49,7 @@ class YaraSorter:
                   self.folderize(mdir)
                   self.file.close()
                 else:
-                  self.rulehashes.append(hashlib.sha256(match.group(1)).hexdigest()) #something fucky going on
+                  self.rulehashes.append(hashlib.sha256(match.group(1)).hexdigest())
 
             if self.remove_duplicates:
               for match in re.finditer(rname_regex, self.file, re.MULTILINE):
@@ -59,36 +60,27 @@ class YaraSorter:
                 else:
                   self.rulenames.append(hashlib.sha256(match.group(1)).hexdigest())
             
-            if re.search(apt_regex, self.filename) is not None:
+            if include_regex:
+              mdir = "Meta_files"
+            elif re.search(apt_regex, self.filename) is not None:
               mdir = "APT"
-              self.folderize(mdir)
-              self.file.close()
             elif re.search(android_regex, self.filename) is not None:
               mdir = "Android"
-              self.folderize(mdir)
-              self.file.close()
             elif re.search(det_regex, self.filename) is not None:
               mdir = "Anti_VM"
-              self.folderize(mdir)
-              self.file.close()
             elif re.search(rat_regex, self.filename) is not None:
               mdir = "RAT"
-              self.folderize(mdir)
-              self.file.close()
             elif re.search(troj_regex, self.filename) is not None:
               mdir = "Malware"
-              self.folderize(mdir)
-              self.file.close()
             elif re.search(misc_regex, self.filename) is not None:
               mdir = "Misc"
-              self.folderize(mdir)
-              self.file.close()
             else:
               #print "No match in filenames, starting to parse file..." #DEBUG
               mdir = self.parseFile()
               #print mdir #DEBUG
-              self.folderize(mdir)
-              self.file.close()
+
+            self.folderize(mdir)
+            self.file.close()
 
         except:
             e = sys.exc_info()[0]
@@ -100,7 +92,6 @@ class YaraSorter:
       return target_dir
 
     def parseFile(self):
-      include_regex = re.search(r'include\s\".*?\"', self.file)
       maltype_regex = re.search(r'maltype = \"(.*?)\"', self.file)
       malware_regex = re.search(r'[Tt][Rr][Oo][Jj][Aa][Nn]|[Mm][Aa][Ll][Ww][Aa][Rr][Ee]', self.file)
       tool_regex = re.search(r'\s[Tt][Oo][Oo][Ll]|[Bb][Rr][Uu][Tt][Ee]|[Uu][Tt][Ii][Ll][Ii][Tt][Yy]', self.file)
@@ -112,9 +103,7 @@ class YaraSorter:
       abso_path = os.path.abspath(self.fullpath)
       #print "Starting to read file %s" % abso_path #DEBUG
       try:
-        if include_regex:
-          target_dir = "Meta_files"
-        elif maltype_regex:
+        if maltype_regex:
           if maltype_regex.group(1) == "Remote Access Trojan":
             target_dir = "RAT"
           elif re.search(apty_regex, maltype_regex.group(1)) is not None:

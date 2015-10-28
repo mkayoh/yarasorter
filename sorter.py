@@ -30,15 +30,15 @@ class YaraSorter:
             rule_regex = '\{([\S\s]*)\}'
             rname_regex = r'rule\s+(.*\S{1})\r*?\n*?$'
             include_regex = re.search(r'include\s+\".*?\"', self.file)
+            import_regex = r'import\s+\"(.*?)\"'
 
             if re.search(script_regex, self.filename) is not None:
-              self.file.close()
-
+              return
             if self.remove_duplicates:
               if hashfile(open(rfile, 'rb'), hashlib.sha256()) in self.hashes:
                 mdir = "Dup_files"
                 self.folderize(mdir)
-                self.file.close()
+                return
               else:
                 self.hashes.append(hashfile(open(rfile, 'rb'), hashlib.sha256()))
 
@@ -46,8 +46,8 @@ class YaraSorter:
               for match in re.finditer(rule_regex, self.file):
                 if hashlib.sha256(match.group(1)).hexdigest() in self.rulehashes:
                   mdir = "Dup_rules"
-                  self.folderize(mdir)
-                  self.file.close()
+                  self.folderize(mdir)  
+                  return
                 else:
                   self.rulehashes.append(hashlib.sha256(match.group(1)).hexdigest())
 
@@ -56,10 +56,19 @@ class YaraSorter:
                 if hashlib.sha256(match.group(1)).hexdigest() in self.rulenames:
                   mdir = "Dup_rulenames"
                   self.folderize(mdir)
-                  self.file.close()
+                  return
                 else:
                   self.rulenames.append(hashlib.sha256(match.group(1)).hexdigest())
             
+            for match in re.finditer(import_regex, self.file, re.MULTILINE):
+              if not module_exists(match.group(1)):
+                #print "Folderizing %s to Imports..." % match.group(1) #DEBUG
+                mdir = "Imports"
+                self.folderize(mdir)
+                return
+              else:
+                pass
+
             if include_regex:
               mdir = "Meta_files"
             elif re.search(apt_regex, self.filename) is not None:
@@ -76,15 +85,18 @@ class YaraSorter:
               mdir = "Misc"
             else:
               #print "No match in filenames, starting to parse file..." #DEBUG
-              mdir = self.parseFile()
+              try:
+                mdir = self.parseFile()
+              except AttributeError, e:
+                print e
               #print mdir #DEBUG
-
             self.folderize(mdir)
-            self.file.close()
+            return
 
         except:
             e = sys.exc_info()[0]
-            error = "Couldn't open file %s for reading. Error %s" % (self.filename, e)  
+            error = "Error processing file %s : %s" % (self.filename, e)
+            print error
         #print "At the end of process_files() now." #DEBUG
 
     def testFunction(self):
@@ -92,47 +104,46 @@ class YaraSorter:
       return target_dir
 
     def parseFile(self):
+      #print "Now parsing file %s" % self.filename #DEBUG
       maltype_regex = re.search(r'maltype = \"(.*?)\"', self.file)
-      malware_regex = re.search(r'[Tt][Rr][Oo][Jj][Aa][Nn]|[Mm][Aa][Ll][Ww][Aa][Rr][Ee]', self.file)
-      tool_regex = re.search(r'\s[Tt][Oo][Oo][Ll]|[Bb][Rr][Uu][Tt][Ee]|[Uu][Tt][Ii][Ll][Ii][Tt][Yy]', self.file)
-      ratty_regex = re.search(r'[Rr][Aa][Tt]', self.file)
-      apty_regex = '[Aa][Pp][Tt]'
       general_regex = re.search(r'[Ii][Dd][Ee][Nn][Tt][Ii][Ff]([Yy]|[Ii][Ee])', self.file) #needs work
       file_regex = re.search(r'[Ff][Ii][Ll][Ee]', self.file)
 
-      abso_path = os.path.abspath(self.fullpath)
-      #print "Starting to read file %s" % abso_path #DEBUG
+      malware_regex = '[Tt][Rr][Oo][Jj][Aa][Nn]|[Mm][Aa][Ll][Ww][Aa][Rr][Ee]'
+      tool_regex = '\s+[Tt][Oo][Oo][Ll]|[Bb][Rr][Uu][Tt][Ee]|[Uu][Tt][Ii][Ll][Ii][Tt][Yy]'
+      ratty_regex = '[Rr][Aa][Tt]'
+      apty_regex = '[Aa][Pp][Tt]'
+      
+      #print "Regexes good, starting the matching..." #DEBUG
       try:
         if maltype_regex:
           if maltype_regex.group(1) == "Remote Access Trojan":
             target_dir = "RAT"
           elif re.search(apty_regex, maltype_regex.group(1)) is not None:
             target_dir = "APT"
-          elif research(malware_regex, malware_regex.group(1)) is not None:
+          elif re.search(malware_regex, maltype_regex.group(1)) is not None:
             target_dir = "Malware"
           else:
             target_dir = maltype_regex.group(1)
-            target_dir = re.sub(r"[^\w\s]", '', target_dir)
-            target_dir = re.sub(r"\s+", '_', target_dir)
-        elif malware_regex:
+            target_dir = ''.join(e for e in target_dir if e.isalnum())
+            return target_dir
+        elif re.search(malware_regex, self.file) is not None:
           target_dir = "Malware"
-        elif tool_regex:
+        elif re.search(tool_regex, self.file) is not None:
           target_dir = "Hacking_tools"
-        elif ratty_regex:
+        elif re.search(ratty_regex, self.file) is not None:
           target_dir = "RAT"
-        elif general_regex and file_regex:
+        elif general_regex is not None and file_regex is not None:
           target_dir = "General"
         else:
           target_dir = "Misc"
 
         return target_dir
-
-      except IOError, e:
+      except TypeError, e:
         print e
 
     def folderize(self, mdir):
         try:
-            #check if folder exists, if not create it
             mdir = os.path.join(self.output, mdir)
             if not os.path.exists(mdir):
                   os.makedirs(mdir)
@@ -166,6 +177,14 @@ def hashfile(afile, hasher, blocksize=65536):
         buf = afile.read(blocksize)
     return hasher.hexdigest()
 
+def module_exists(module_name):
+    try:
+        __import__(module_name)
+    except ImportError:
+        return False
+    else:
+        return True
+
 
 if __name__ == '__main__':
 
@@ -195,3 +214,4 @@ if __name__ == '__main__':
         filename = os.path.basename(f.name)
         yara = YaraSorter(file, f.name, filename, args.output_dir, args.remove_duplicates, hashes, rulehashes, rulenames)
         yara.process_files()
+      f.closed

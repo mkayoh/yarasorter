@@ -17,6 +17,9 @@ Right now the rules get sorted into six different categories:
 * Misc
 * RAT
 
+Also if the rulefile has *maltype* field(s) in them, a folder will be created based on the first occurrence for the rulefile.
+
+
 The duplicate checking option will sort the possibly duplicate rules in the following folders:
 
 * Dup_files
@@ -26,7 +29,13 @@ The duplicate checking option will sort the possibly duplicate rules in the foll
 * Dup_rulenames
 	- Files that contain rules with already used rulenames
 
-One special folder **Meta_files** is reserved for Yara's meta-rulefiles. If you use the aforementioned GithubDownloader it'll download a bunch of meta files as well that are used just for invoking other rulefiles. Running Yara with multiple of these usually spells trouble and because of this the script will pick out all of the files that have the string *include "rule_file"* in them.
+There are two special folders: 
+
+* Meta_files
+* Imports
+
+The former is reserved for Yara's meta-rulefiles. If you use the aforementioned GithubDownloader it'll download a bunch of meta files as well that are used just for invoking other rulefiles. Running Yara with multiple of these usually spells trouble and because of this the script will pick out all of the files that have the string *include "rule_file"* in them.
+The latter is for rulefiles that import a Python module that isn't present on the system where the script is ran.
 
 ## Disclaimer
 

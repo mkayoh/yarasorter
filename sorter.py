@@ -17,7 +17,7 @@ class YaraSorter:
         self.rulehashes = rulehashes
         self.rulenames = rulenames
 
-    def process_files(self): 
+    def process_files(self):
 
         try:
             script_regex = os.path.basename(__file__)
@@ -28,7 +28,7 @@ class YaraSorter:
             android_regex = '[Aa][Nn][Dd][Rr][Oo][Ii][Dd]'
             misc_regex = '[Mm][Ii][Ss][Cc]'
             rule_regex = '\{([\S\s]*)\}'
-            rname_regex = r'rule\s+(.*\S{1})\r*?\n*?$'
+            rname_regex = r'rule\s+(.*[^\s{])'
             include_regex = re.search(r'include\s+\".*?\"', self.file)
             import_regex = r'import\s+\"(.*?)\"'
 
@@ -46,20 +46,24 @@ class YaraSorter:
               for match in re.finditer(rule_regex, self.file):
                 if hashlib.sha256(match.group(1)).hexdigest() in self.rulehashes:
                   mdir = "Dup_rules"
-                  self.folderize(mdir)  
+                  self.folderize(mdir)
                   return
                 else:
                   self.rulehashes.append(hashlib.sha256(match.group(1)).hexdigest())
 
             if self.remove_duplicates:
               for match in re.finditer(rname_regex, self.file, re.MULTILINE):
-                if hashlib.sha256(match.group(1)).hexdigest() in self.rulenames:
+                if re.search(r':', match.group(1)):
+                  rule_name = re.search(r'(^\w+)', match.group(1)).group(1)
+                else:
+                  rule_name = match.group(1)
+                if hashlib.sha256(rule_name).hexdigest() in self.rulenames:
                   mdir = "Dup_rulenames"
                   self.folderize(mdir)
                   return
                 else:
                   self.rulenames.append(hashlib.sha256(match.group(1)).hexdigest())
-            
+
             for match in re.finditer(import_regex, self.file, re.MULTILINE):
               if not module_exists(match.group(1)):
                 #print "Folderizing %s to Imports..." % match.group(1) #DEBUG
@@ -99,9 +103,6 @@ class YaraSorter:
             print error
         #print "At the end of process_files() now." #DEBUG
 
-    def testFunction(self):
-      target_dir = "Derp."
-      return target_dir
 
     def parseFile(self):
       #print "Now parsing file %s" % self.filename #DEBUG
@@ -113,7 +114,7 @@ class YaraSorter:
       tool_regex = '\s+[Tt][Oo][Oo][Ll]|[Bb][Rr][Uu][Tt][Ee]|[Uu][Tt][Ii][Ll][Ii][Tt][Yy]'
       ratty_regex = '[Rr][Aa][Tt]'
       apty_regex = '[Aa][Pp][Tt]'
-      
+
       #print "Regexes good, starting the matching..." #DEBUG
       try:
         if maltype_regex:
@@ -149,9 +150,9 @@ class YaraSorter:
                   os.makedirs(mdir)
         except:
             e = sys.exc_info()[0]
-            error = "Couldn't create the directory %s for %s in output directory. Error %s" % (self.output, self.filename, e)  
+            error = "Couldn't create the directory %s for %s in output directory. Error %s" % (self.output, self.filename, e)
             print error
-            
+
         #copy the file to the folder
         filepath = os.path.abspath(self.fullpath)
         mdir = os.path.abspath(mdir)

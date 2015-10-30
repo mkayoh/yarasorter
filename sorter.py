@@ -62,7 +62,7 @@ class YaraSorter:
                   self.folderize(mdir)
                   return
                 else:
-                  self.rulenames.append(hashlib.sha256(match.group(1)).hexdigest())
+                  self.rulenames.append(hashlib.sha256(rule_name).hexdigest())
 
             for match in re.finditer(import_regex, self.file, re.MULTILINE):
               if not module_exists(match.group(1)):

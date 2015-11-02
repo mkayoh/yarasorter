@@ -6,9 +6,9 @@ One good project to pair with this one is [unusedPhd/GithubDownloader](https://g
 
 `./sorter.py -f <yara_files> -o <OUTPUT_DIR> -r`
 
-Omit the -r if you wish to just sort the rules without checking for duplicates.
+Omit the `-r` if you wish to just sort the rules without checking for duplicates.
 
-Use the argument `-t` to test the rules after sorting in Yara. All non-working rules are moved into *Broken_rules*.
+Use the argument `-t` to test the rules after sorting in Yara.
 
 Right now the rules get sorted into six different categories:
 
@@ -31,13 +31,16 @@ The duplicate checking option will sort the possibly duplicate rules in the foll
 * Dup_rulenames
 	- Files that contain rules with already used rulenames
 
-There are two special folders: 
+There are three special folders: 
 
 * Meta_files
 * Imports
+* Broken_rules
 
-The former is reserved for Yara's meta-rulefiles. If you use the aforementioned GithubDownloader it'll download a bunch of meta files as well that are used just for invoking other rulefiles. Running Yara with multiple of these usually spells trouble and because of this the script will pick out all of the files that have the string *include "rule_file"* in them.
-The latter is for rulefiles that import a Python module that isn't present on the system where the script is ran.
+The first is reserved for Yara's meta-rulefiles. If you use the aforementioned GithubDownloader it'll download a bunch of meta files as well that are used just for invoking other rulefiles. Running Yara with multiple of these usually spells trouble and because of this the script will pick out all of the files that have the string *include "rule_file"* in them.
+The second one is for rulefiles that import a Python module that isn't present on the system where the script is ran.
+
+Finally the third one is only created if you use the `-t` argument when running the sorter and all rules that cause an error in Yara for one reason or another are places in this folder after the initial sorting.
 
 ## Disclaimer
 

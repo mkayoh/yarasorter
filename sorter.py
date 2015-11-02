@@ -182,10 +182,6 @@ class RuleChecker:
 
     def checkRules(self):
       for root, dirs, files in os.walk(os.path.abspath(self.output)):
-        if 'Dup_*' in dirs:
-          dirs.remove('Dup_*')
-        if 'Meta_files' in dirs:
-          dirs.remove('Meta_files')
         for file in files:
           file = os.path.join(root, file)
           p = subprocess.Popen(['yara', file, self.sample], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -205,9 +201,17 @@ class RuleChecker:
             except:
               e = sys.exc.info()[0]
               print "Error: %s" % (e)
+        if 'Dup_files' in dirs:
+          dirs.remove('Dup_files')
+        if 'Dup_rulenames' in dirs:
+          dirs.remove('Dup_rulenames')
+        if 'Dup_rules' in dirs:
+          dirs.remove('Dup_rules')
+        if 'Meta_files' in dirs:
+          dirs.remove('Meta_files')
+        if 'Imports' in dirs:
+          dirs.remove('Imports')
         
-            
-
 
 
 def hashfile(afile, hasher, blocksize=65536):

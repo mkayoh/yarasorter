@@ -9,6 +9,7 @@ One good project to pair with this one is [unusedPhd/GithubDownloader](https://g
 Omit the `-r` if you wish to just sort the rules without checking for duplicates.
 
 Use the argument `-t` to test the rules after sorting in Yara.
+If you want to just check the rules for duplicates/working rules and output them into a single directory use the `-n` argument.
 
 Right now the rules get sorted into six different categories:
 

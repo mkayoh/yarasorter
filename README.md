@@ -8,6 +8,8 @@ One good project to pair with this one is [unusedPhd/GithubDownloader](https://g
 
 Omit the -r if you wish to just sort the rules without checking for duplicates.
 
+Use the argument `-t` to test the rules after sorting in Yara. All non-working rules are moved into *Broken_rules*.
+
 Right now the rules get sorted into six different categories:
 
 * Android

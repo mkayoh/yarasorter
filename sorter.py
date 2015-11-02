@@ -177,7 +177,7 @@ class RuleChecker:
     def __init__(self, output):
       self.output = output
       self.basepath = os.path.dirname(os.path.realpath(__file__))
-      self.sample = os.path.join(self.basepath, "sample/monie.exe")
+      self.sample = os.path.join(self.basepath, "sample/eicar.txt")
       self.badFolder = os.path.join(self.output, 'Broken_rules')
 
     def checkRules(self):

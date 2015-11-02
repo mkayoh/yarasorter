@@ -5,6 +5,7 @@ import os, sys, re
 import argparse
 import shutil
 import hashlib
+import subprocess
 
 class YaraSorter:
     def __init__(self, file, fullpath, filename, output, remove_duplicates, hashes, rulehashes, rulenames):
@@ -171,6 +172,44 @@ class YaraSorter:
           e = sys.exc.info()[0]
           print "Error: %s" % (e)
 
+
+class RuleChecker:
+    def __init__(self, output):
+      self.output = output
+      self.basepath = os.path.dirname(os.path.realpath(__file__))
+      self.sample = os.path.join(self.basepath, "sample/monie.exe")
+      self.badFolder = os.path.join(self.output, 'Broken_rules')
+
+    def checkRules(self):
+      for root, dirs, files in os.walk(os.path.abspath(self.output)):
+        if 'Dup_*' in dirs:
+          dirs.remove('Dup_*')
+        if 'Meta_files' in dirs:
+          dirs.remove('Meta_files')
+        for file in files:
+          file = os.path.join(root, file)
+          p = subprocess.Popen(['yara', file, self.sample], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          out, err = p.communicate()
+          if re.search(r'[Ee][Rr][Rr][Oo][Rr]', err) is not None:
+            #print err #DEBUG
+            try:
+              if not os.path.exists(self.badFolder):
+                os.makedirs(self.badFolder)
+            except:
+              e = sys.exc_info()[0]
+              error = "Couldn't create the directory %s for %s in output directory. Error %s" % (self.output, file, e)
+              print error
+            try:
+              if os.path.exists(self.badFolder):
+                  shutil.move(file, self.badFolder)
+            except:
+              e = sys.exc.info()[0]
+              print "Error: %s" % (e)
+        
+            
+
+
+
 def hashfile(afile, hasher, blocksize=65536):
     buf = afile.read(blocksize)
     while len(buf) > 0:
@@ -193,6 +232,7 @@ if __name__ == '__main__':
   parser.add_argument('-f','--file', nargs='*', required = True, help = "Full path to the yara rule(s) to sort, use wildcard (*) to sort all the rules in a folder")
   parser.add_argument("-o", "--output-dir", default = "", help = "Output directory where to sort the rules, by default the current working directory")
   parser.add_argument("-r", "--remove-duplicates", default = False, action = "store_true", help ="Place the duplicate rulefiles in their separate folders")
+  parser.add_argument("-t", "--test-rules", default = False, action = "store_true", help ="Test the sorted rules in Yara against a sample and weed out the bad ones left")
   if len(sys.argv) == 1:
     parser.print_help()
     sys.exit(1)
@@ -216,3 +256,9 @@ if __name__ == '__main__':
         yara = YaraSorter(file, f.name, filename, args.output_dir, args.remove_duplicates, hashes, rulehashes, rulenames)
         yara.process_files()
       f.closed
+
+  if args.test_rules:
+    rcheck = RuleChecker(args.output_dir)
+    rcheck.checkRules()
+  else:
+    sys.exit(1)

@@ -8,12 +8,13 @@ import hashlib
 import subprocess
 
 class YaraSorter:
-    def __init__(self, file, fullpath, filename, output, remove_duplicates, hashes, rulehashes, rulenames):
+    def __init__(self, file, fullpath, filename, output, remove_duplicates, no_sorting, hashes, rulehashes, rulenames):
         self.file = file
         self.fullpath = fullpath
         self.filename = filename
         self.output = output
         self.remove_duplicates = remove_duplicates
+        self.no_sorting = no_sorting
         self.hashes = hashes
         self.rulehashes = rulehashes
         self.rulenames = rulenames
@@ -74,8 +75,14 @@ class YaraSorter:
               else:
                 pass
 
+            
+
             if include_regex:
               mdir = "Meta_files"
+            elif self.no_sorting:
+              mdir = ""
+              self.folderize(mdir)
+              return
             elif re.search(apt_regex, self.filename) is not None:
               mdir = "APT"
             elif re.search(android_regex, self.filename) is not None:
@@ -237,6 +244,7 @@ if __name__ == '__main__':
   parser.add_argument("-o", "--output-dir", default = "", help = "Output directory where to sort the rules, by default the current working directory")
   parser.add_argument("-r", "--remove-duplicates", default = False, action = "store_true", help ="Place the duplicate rulefiles in their separate folders")
   parser.add_argument("-t", "--test-rules", default = False, action = "store_true", help ="Test the sorted rules in Yara against a sample and weed out the bad ones left")
+  parser.add_argument("-n", "--no-sorting", default = False, action = "store_true", help ="Enable to output all the rules in a single folder")
   if len(sys.argv) == 1:
     parser.print_help()
     sys.exit(1)
@@ -257,7 +265,7 @@ if __name__ == '__main__':
       with open(rfile, 'r') as f:
         file = f.read()
         filename = os.path.basename(f.name)
-        yara = YaraSorter(file, f.name, filename, args.output_dir, args.remove_duplicates, hashes, rulehashes, rulenames)
+        yara = YaraSorter(file, f.name, filename, args.output_dir, args.remove_duplicates, args.no_sorting, hashes, rulehashes, rulenames)
         yara.process_files()
       f.closed
 

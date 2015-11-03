@@ -19,18 +19,7 @@ if __name__ == '__main__':
       print 'The file provided could not be found. Error: %s' % e
       sys.exit(1)
   yara = os.path.join(args.output_dir, 'rules.yara')
-  '''
-  with open('rules.yara', 'a+') as f:
-    f.write("include \"ft_exe.yara\"\n")
-    f.write("include \"ft_office_open_xml.yara\"\n")
-    f.write("include \"ft_ole_cf.yara\"\n")
-    f.write("include \"ft_pdf.yara\"\n")
-    f.write("include \"ft_rar.yara\"\n")
-    f.write("include \"ft_swf.yara\"\n")
-    f.write("include \"ft_zip.yara\"\n")
-    f.write("include \"misc_compressed_exe.yara\"\n")
-    f.write("include \"misc_ooxml_core_properties.yara\"\n")
-  '''
+  
   for rfile in args.file:
     if os.path.isfile(rfile):
       rfile = re.search(r'.*\/(.*)$', rfile).group(1)
